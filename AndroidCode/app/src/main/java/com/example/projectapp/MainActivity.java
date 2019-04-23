@@ -1,16 +1,27 @@
 package com.example.projectapp;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.PointsGraphSeries;
+
+import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,10 +45,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = parent.getItemAtPosition(position).toString();
-                if(selectedItem.equals("Custom"))
-                    uploadFile.setVisibility(View.VISIBLE);
+                if(selectedItem.equals("Custom"))   {
+                    findViewById(R.id.uploadFileButton).setVisibility(View.VISIBLE);
+                    GraphView graphView = findViewById(R.id.graphInterface);
+                    graphView.removeAllSeries();
+                    graphView.setVisibility(View.GONE);
+                    //TODO : handle case of Custom selected and Detect clicked without uploading file
+                }
                 else
-                    uploadFile.setVisibility(View.GONE);
+                    findViewById(R.id.uploadFileButton).setVisibility(View.GONE);
             }
 
             @Override
@@ -46,14 +62,203 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        GraphView graph = (GraphView) findViewById(R.id.graph);
-        LineGraphSeries<DataPoint> series = new LineGraphSeries<DataPoint>(new DataPoint[] {
-                new DataPoint(0, 1),
-                new DataPoint(1, 5),
-                new DataPoint(2, 3),
-                new DataPoint(3, 2),
-                new DataPoint(4, 6)
+        Button detectButton = findViewById(R.id.detectButton);
+        detectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("detectButton", "DetectButtonClick Handler called");
+                onDetectButtonClickHandler();
+            }
         });
-        graph.addSeries(series);
+
+    }
+
+    public void plotGraph(float[] record){
+
+        GraphView graphView = (GraphView) findViewById(R.id.graphInterface);
+        int n =record.length;
+        DataPoint[] dataPoints =new DataPoint[n];
+
+        DataPoint temp=null;
+        for(int i=1;i<=n;i++){
+            temp= new DataPoint(i,record[i-1]);
+            dataPoints[i-1] = temp;
+        }
+
+
+        LineGraphSeries<DataPoint> series = new LineGraphSeries<DataPoint>(dataPoints);
+        series.setColor(Color.BLUE);
+        graphView.addSeries(series);
+
+        List<DataPoint> highlightedPoints =new ArrayList<DataPoint>();
+        DataPoint hdp = null;
+        for(int i=1;i<=n;i++){
+            if(record[i-1] <= 60) {
+                hdp = new DataPoint(i, record[i - 1]);
+                highlightedPoints.add(hdp);
+            }
+        }
+        DataPoint[] highlightedDP = new DataPoint[highlightedPoints.size()];
+        highlightedDP = highlightedPoints.toArray(highlightedDP);
+        PointsGraphSeries<DataPoint> pointsGraphSeries = new PointsGraphSeries<DataPoint>(highlightedDP);
+        pointsGraphSeries.setColor(Color.RED);
+        pointsGraphSeries.setSize(10.0f);
+        graphView.addSeries(pointsGraphSeries);
+    }
+
+    public void falsePositive(float[] hr){
+
+        int cnt_threshold=3,window=6;
+        Double sum=0.0;
+        int start=0;
+        int end;
+        int brady=0;
+        float threshold = 60.0f;
+
+        int[] manual_label = new int[hr.length];
+        int[] detect_label = new int[hr.length];
+        //manual annotation based on threshold
+        for(int i=0;i<hr.length;i++)
+        {
+            if(hr[i]<=threshold)
+                manual_label[i]=1;
+            else
+                manual_label[i]=0;
+
+        }
+        // Time-window based detection algorithm
+        while(true)
+        {
+            end=start+(window-1);
+            if(end==hr.length)
+                break;
+            brady=0;
+
+            //getting count of braycardia in the threshold window
+
+            for(int j = start;j<end;j++)
+            {
+                float curr_hr=hr[j];
+                if(curr_hr<=threshold)
+                {
+                    brady++;
+                }
+
+            }
+            //labelling all values within window based on threshold count
+            if(brady >cnt_threshold)//set to 0 when above threshold
+            {
+                for(int i=start;i<start+(window-1);i++)
+                {
+                    //System.out.println("I value within greater than count threshold: "+i+" HR:"+hr.get(i));
+                    detect_label[i]=1;
+                    //System.out.println("Within greater not 1 already "+detect_label[i]);
+
+                }
+
+            }
+            else//set to 1 when below or equal to count threshold
+            {
+                for(int i=start;i<start+(window-1);i++)
+                {  // System.out.println("I value lesser than count threshold: "+i+" HR:"+hr.get(i));
+                    if((detect_label[i]==1)) //&&((Double)(hr.get(i))<=threshold))
+
+                    {
+                        // System.out.println("Within greater already 1 "+detect_label[i]);
+                        continue;
+                    }
+                    else
+                    {
+                        detect_label[i]=0;
+                    }
+                    //System.out.println("Within lesser than count threshold "+detect_label[i]);
+                }
+            }
+            start++;
+        }
+        //computing FP and FN
+        int fn=0,fp=0;
+        for(int i=0;i<detect_label.length;i++)
+        {
+            if ((manual_label[i]==1) && (detect_label[i]==0))
+            {
+                fn++;
+            }
+            if(manual_label[i]==0 && detect_label[i]==1)
+            {
+                fp++;
+            }
+
+        }
+        boolean isBradyCardia=false;
+        String bradyCardiaResult=null;
+        Log.d("manual_label", ""+ Arrays.toString(manual_label));
+        Log.d("detect_label", ""+ Arrays.toString(detect_label));
+
+        //Show if the concerned patient has bradycardia
+        for (int p:manual_label) {
+            if (p!=0){
+                isBradyCardia = true;
+                bradyCardiaResult = "Positive";
+                break;
+            }else {bradyCardiaResult = "Negative";}
+        };
+
+        Log.d("falsePositive","False Positive: "+fp+"False Negatives: "+fn);
+        TextView falsePositive = findViewById(R.id.falsePositive);
+        falsePositive.setText("False Positive: " + fp);
+        TextView falseNegative = findViewById(R.id.falseNegtive);
+        falseNegative.setText("False Negative: " + fn);
+        //Toast.makeText(getApplicationContext(),"fp:"+fp+"fn"+fn,Toast.LENGTH_LONG).show();
+    }
+
+
+    public void onDetectButtonClickHandler() {
+        GraphView graph = (GraphView) findViewById(R.id.graphInterface);
+        graph.setVisibility(View.VISIBLE);
+        graph.removeAllSeries();
+        Spinner spinner = findViewById(R.id.spinner);
+        String selectedItem = spinner.getSelectedItem().toString();
+        Log.d("DetectButtonClick",""+selectedItem);
+        Button uploadFile = findViewById(R.id.uploadFileButton);
+
+        LoadData loadData = null;
+        InputStream inputStream = null;
+        List<float[]> heartRateRecords = new ArrayList<float[]>();
+        if(selectedItem.equals("Person 1")) {
+            inputStream = getResources().openRawResource(R.raw.ekg_raw_16272_person1);
+            loadData = new LoadData(inputStream);
+            heartRateRecords = loadData.read();
+            plotGraph(heartRateRecords.get(0));
+            Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
+        }
+        else if(selectedItem.equals("Person 2"))  {
+            inputStream = getResources().openRawResource(R.raw.ekg_raw_16273_person2);
+            loadData = new LoadData(inputStream);
+            heartRateRecords = loadData.read();
+            plotGraph(heartRateRecords.get(0));
+            Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
+
+        }
+        else if(selectedItem.equals("Person 3"))  {
+            inputStream = getResources().openRawResource(R.raw.ekg_raw_16420_person3);
+            loadData = new LoadData(inputStream);
+            heartRateRecords = loadData.read();
+            plotGraph(heartRateRecords.get(0));
+            Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
+
+        }
+        else if(selectedItem.equals("Person 4"))  {
+            inputStream = getResources().openRawResource(R.raw.ekg_raw_16483_person4);
+            loadData = new LoadData(inputStream);
+            heartRateRecords = loadData.read();
+            plotGraph(heartRateRecords.get(0));
+            Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
+        }
+        else if(selectedItem.equals("Custom"))   {
+            Toast.makeText(MainActivity.this, "Select Upload file", Toast.LENGTH_SHORT).show();
+            //TODO
+        }
+        falsePositive(heartRateRecords.get(0));
     }
 }
