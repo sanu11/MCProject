@@ -1,2 +1,1 @@
-# MCProject
-Heart Rate prediction 
+#Heart Rate precition using ECG
