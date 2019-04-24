@@ -3,12 +3,10 @@ package com.example.projectapp;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.Color;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,16 +35,48 @@ import weka.core.Instances;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Classifier SVM = null;
+//    private Classifier SVM = null;
     private PerformanceEvaluator evaluator = new PerformanceEvaluator();
     private String modelSelected = "";
+    private int SelectedPersonIndex = 0;
+
+    private ArrayList<Classifier> svmModels = new ArrayList<>();
+    private ArrayList<Classifier> lrModels = new ArrayList<>();
+    private ArrayList<Classifier> rfModels = new ArrayList<>();
+    private ArrayList<Classifier> nbModels = new ArrayList<>();
+
+    public void loadClassifiers() throws Exception {
+        AssetManager assetManager = getAssets();
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm272.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm273.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm483.model")));
+
+        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic272.model")));
+        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic273.model")));
+        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic.model")));
+        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic483.model")));
+
+        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest272.model")));
+        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest273.model")));
+        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest.model")));
+        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest483.model")));
+
+        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes272.model")));
+        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes273.model")));
+        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes.model")));
+        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes483.model")));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
+        try {
+            loadClassifiers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String[] arraySpinner = new String[] {
                 "Person 1", "Person 2", "Person 3", "Person 4", "Custom"
         };
@@ -61,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = parent.getItemAtPosition(position).toString();
+                SelectedPersonIndex = position;
                 if(selectedItem.equals("Custom"))   {
                     findViewById(R.id.uploadFileButton).setVisibility(View.VISIBLE);
                     GraphView graphView = findViewById(R.id.graphInterface);
@@ -92,12 +123,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.d("predictButton", "predictButtonClick Handler called");
-                try {
-                    openDialog();
-                    onPredictButtonClickHandler();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                openDialog();
             }
         });
 
@@ -110,8 +136,8 @@ public class MainActivity extends AppCompatActivity {
         List<String> optionList = new ArrayList<>();
         optionList.add("SVM");
         optionList.add("Logistic Regression");
-        optionList.add("Decision Tree");
-        optionList.add("Model 4");  //TODO: rename Model 4
+        optionList.add("Random Forest");
+        optionList.add("Naive Bayes");
         RadioGroup radioGroup = (RadioGroup) modelMenuDialog.findViewById(R.id.radio_group);
 
         for(int i=0;i<optionList.size();i++){
@@ -127,11 +153,58 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup rg, int i) {
                 int childCount = rg.getChildCount();
+                Log.d("person index", String.valueOf(SelectedPersonIndex));
+                InputStream inputStream = null;
+                switch (SelectedPersonIndex) {
+                    case 0:
+                        inputStream = getResources().openRawResource(R.raw.data_test_272);
+                        break;
+                    case 1:
+                        inputStream = getResources().openRawResource(R.raw.data_test_273);
+                        break;
+                    case 2:
+                        inputStream = getResources().openRawResource(R.raw.data_test_420);
+                        break;
+                    case 3:
+                        inputStream = getResources().openRawResource(R.raw.data_test_483);
+                    default:
+                        break;
+                }
                 for(int x=0; x<childCount; x++)   {
                     RadioButton rb = (RadioButton) rg.getChildAt(x);
                     if(rb.getId() == i) {
                         modelSelected = rb.getText().toString();
-                        Log.d("radioGroupSelection","" + rb.getText().toString());
+                        if (modelSelected.equals("SVM")) {
+                            Log.d("radioGroupSelection","SVM");
+                            try {
+                                loadDataAndPredict(svmModels.get(SelectedPersonIndex), inputStream);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        } else if (modelSelected.equals("Logistic Regression")) {
+                            Log.d("radioGroupSelection","LR");
+                            try {
+                                loadDataAndPredict(lrModels.get(SelectedPersonIndex), inputStream);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else if (modelSelected.equals("Random Forest")) {
+                            Log.d("radioGroupSelection","RF");
+                            try {
+                                loadDataAndPredict(rfModels.get(SelectedPersonIndex), inputStream);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else if (modelSelected.equals("Naive Bayes")) {
+                            Log.d("radioGroupSelection","NB");
+                            try {
+                                loadDataAndPredict(nbModels.get(SelectedPersonIndex), inputStream);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        break;
                     }
                 }
                 modelMenuDialog.dismiss();
@@ -375,40 +448,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("LongLogTag")
-    public void onPredictButtonClickHandler() throws IOException {
+    public void loadDataAndPredict(Classifier classifier, InputStream inputStream) throws IOException {
         long startTime = System.nanoTime();
 
-        DataDeserializer deserializer = new DataDeserializer(getResources().openRawResource(R.raw.data_test_272));
+        DataDeserializer deserializer = new DataDeserializer(inputStream);
         ArrayList<Sample> samples = deserializer.deserializeSamples();
         Log.d("Size of sample", String.valueOf(samples.size()));
-
-        AssetManager assetManager = getAssets();
-
-        try{
-            SVM = (Classifier) weka.core.SerializationHelper.read(assetManager.open("svm272.model"));
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
 
         ArrayList<String> actual = new ArrayList<>();
         for (int i=0; i<samples.size();i++){
             actual.add(samples.get(i).getLabel());
         }
 
-        List<String> predictions  = predictBradycardia(SVM, samples);
+        List<String> predictions  = predictBradycardia(classifier, samples);
         long endTime = System.nanoTime();
 
         double executionTime = (double) (endTime - startTime)/1000000;
         Log.d("execution time in miliseconds", String.valueOf(executionTime));
         float accuracy = evaluator.calculateAccuracy(actual, predictions);
         Log.d("accuracy", String.valueOf(accuracy));
-        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
-        Log.d("false negative", String.valueOf(falseNegative));
-        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
-        Log.d("false positive", String.valueOf(falsePositive));
+//        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
+//        Log.d("false negative", String.valueOf(falseNegative));
+//        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
+//        Log.d("false positive", String.valueOf(falsePositive));
     }
 }
