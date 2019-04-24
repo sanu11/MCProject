@@ -1,14 +1,19 @@
 package com.example.projectapp;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.graphics.Color;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Classifier SVM = null;
     private PerformanceEvaluator evaluator = new PerformanceEvaluator();
+    private String modelSelected = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,10 +93,48 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.d("predictButton", "predictButtonClick Handler called");
                 try {
+                    openDialog();
                     onPredictButtonClickHandler();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        });
+
+    }
+
+    public void openDialog()    {
+        final Dialog modelMenuDialog = new Dialog(this);
+        modelMenuDialog.setTitle("Select Model");
+        modelMenuDialog.setContentView(R.layout.model_menu);
+        List<String> optionList = new ArrayList<>();
+        optionList.add("SVM");
+        optionList.add("Logistic Regression");
+        optionList.add("Decision Tree");
+        optionList.add("Model 4");  //TODO: rename Model 4
+        RadioGroup radioGroup = (RadioGroup) modelMenuDialog.findViewById(R.id.radio_group);
+
+        for(int i=0;i<optionList.size();i++){
+            RadioButton radioButton = new RadioButton(this); // dynamically creating RadioButton and adding to RadioGroup.
+            radioButton.setText(optionList.get(i));
+            radioButton.setTextSize(20.0f);
+            radioButton.setTextAppearance(R.style.TextAppearance_AppCompat_Light_Widget_PopupMenu_Large);
+            radioGroup.addView(radioButton);
+        }
+
+        modelMenuDialog.show();
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup rg, int i) {
+                int childCount = rg.getChildCount();
+                for(int x=0; x<childCount; x++)   {
+                    RadioButton rb = (RadioButton) rg.getChildAt(x);
+                    if(rb.getId() == i) {
+                        modelSelected = rb.getText().toString();
+                        Log.d("radioGroupSelection","" + rb.getText().toString());
+                    }
+                }
+                modelMenuDialog.dismiss();
             }
         });
 
