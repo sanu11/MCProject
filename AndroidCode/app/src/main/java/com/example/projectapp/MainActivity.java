@@ -1,5 +1,6 @@
 package com.example.projectapp;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -329,7 +330,9 @@ public class MainActivity extends AppCompatActivity {
         return predOutput;
     }
 
+    @SuppressLint("LongLogTag")
     public void onPredictButtonClickHandler() throws IOException {
+        long startTime = System.nanoTime();
 
         DataDeserializer deserializer = new DataDeserializer(getResources().openRawResource(R.raw.data_test_272));
         ArrayList<Sample> samples = deserializer.deserializeSamples();
@@ -353,6 +356,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         List<String> predictions  = predictBradycardia(SVM, samples);
+        long endTime = System.nanoTime();
+
+        double executionTime = (double) (endTime - startTime)/1000000;
+        Log.d("execution time in miliseconds", String.valueOf(executionTime));
         float accuracy = evaluator.calculateAccuracy(actual, predictions);
         Log.d("accuracy", String.valueOf(accuracy));
         float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
