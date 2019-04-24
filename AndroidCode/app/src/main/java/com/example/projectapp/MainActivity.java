@@ -18,10 +18,17 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import android.content.res.AssetManager;
+import weka.classifiers.Classifier;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instances;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,6 +75,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.d("detectButton", "DetectButtonClick Handler called");
                 onDetectButtonClickHandler();
+            }
+        });
+
+        Button predictButton = findViewById(R.id.predictButton);
+        predictButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("predictButton", "predictButtonClick Handler called");
+                onPredictButtonClickHandler();
             }
         });
 
@@ -260,5 +276,52 @@ public class MainActivity extends AppCompatActivity {
             //TODO
         }
         falsePositive(heartRateRecords.get(0));
+    }
+    private Classifier SVM = null;
+
+    public void onPredictButtonClickHandler(){
+        AssetManager assetManager = getAssets();
+
+        //Toast.makeText(this,"Model loaded",Toast.LENGTH_SHORT).show();
+
+        float[] predData = new float[]{1.7f,4.1f,0.1f,3.9f,1.7f};
+        final Attribute attributeVariance = new Attribute("Variance");
+        final List<String> classes = new ArrayList<String>(){
+            {
+                add("1");
+                add("0");
+            }
+        };
+        ArrayList<Attribute> attributeList = new ArrayList<Attribute>(1){
+            {
+                add(attributeVariance);
+                Attribute attributeClass = new Attribute("@@class@@",classes);
+                add(attributeClass);
+            }
+        };
+        Log.d("Check","Creating attribute list");
+        Instances dataUnpredicted = new Instances("TestInstances",
+                attributeList, 1);
+        dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
+
+        DenseInstance newInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
+            {
+                setValue(attributeVariance, predData[0]);
+            }
+        };
+        newInstance.setDataset(dataUnpredicted);
+        Log.d("Check","Predict instance created");
+
+        try {
+            SVM = (Classifier) weka.core.SerializationHelper.read(assetManager.open("svm.model"));
+            double result = SVM.classifyInstance(newInstance);
+            Log.d("predict","Data is predicted");
+            String className = classes.get(new Double(result).intValue());
+            String msg = "Nr: " + predData[0] + ", predicted: " + className;
+            Log.d("Weka_test", msg);
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
