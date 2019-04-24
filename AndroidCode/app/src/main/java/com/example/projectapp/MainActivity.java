@@ -288,8 +288,8 @@ public class MainActivity extends AppCompatActivity {
         final Attribute attributeVariance = new Attribute("Variance");
         final List<String> classes = new ArrayList<String>(){
             {
-                add("1");
-                add("0");
+                add("Positive");
+                add("Negative");
             }
         };
         ArrayList<Attribute> attributeList = new ArrayList<Attribute>(1){
