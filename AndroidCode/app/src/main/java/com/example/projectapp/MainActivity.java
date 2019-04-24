@@ -17,7 +17,6 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -86,7 +85,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.d("predictButton", "predictButtonClick Handler called");
-                onPredictButtonClickHandler();
+                try {
+                    onPredictButtonClickHandler();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -241,36 +244,36 @@ public class MainActivity extends AppCompatActivity {
         Log.d("DetectButtonClick",""+selectedItem);
         Button uploadFile = findViewById(R.id.uploadFileButton);
 
-        LoadData loadData = null;
+        DataDeserializer dataDeserializer = null;
         InputStream inputStream = null;
         List<float[]> heartRateRecords = new ArrayList<float[]>();
         if(selectedItem.equals("Person 1")) {
             inputStream = getResources().openRawResource(R.raw.ekg_raw_16272_person1);
-            loadData = new LoadData(inputStream);
-            heartRateRecords = loadData.read();
+            dataDeserializer = new DataDeserializer(inputStream);
+            heartRateRecords = dataDeserializer.deserializeHRSample();
             plotGraph(heartRateRecords.get(0));
             Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
         }
         else if(selectedItem.equals("Person 2"))  {
             inputStream = getResources().openRawResource(R.raw.ekg_raw_16273_person2);
-            loadData = new LoadData(inputStream);
-            heartRateRecords = loadData.read();
+            dataDeserializer = new DataDeserializer(inputStream);
+            heartRateRecords = dataDeserializer.deserializeHRSample();
             plotGraph(heartRateRecords.get(0));
             Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
 
         }
         else if(selectedItem.equals("Person 3"))  {
             inputStream = getResources().openRawResource(R.raw.ekg_raw_16420_person3);
-            loadData = new LoadData(inputStream);
-            heartRateRecords = loadData.read();
+            dataDeserializer = new DataDeserializer(inputStream);
+            heartRateRecords = dataDeserializer.deserializeHRSample();
             plotGraph(heartRateRecords.get(0));
             Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
 
         }
         else if(selectedItem.equals("Person 4"))  {
             inputStream = getResources().openRawResource(R.raw.ekg_raw_16483_person4);
-            loadData = new LoadData(inputStream);
-            heartRateRecords = loadData.read();
+            dataDeserializer = new DataDeserializer(inputStream);
+            heartRateRecords = dataDeserializer.deserializeHRSample();
             plotGraph(heartRateRecords.get(0));
             Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
         }
@@ -282,9 +285,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public List<String> predictBradycardia(Classifier model) {
+    public List<String> predictBradycardia(Classifier model, ArrayList<Sample> testData) {
 
-        float[] predData = new float[]{1.7f,4.1f,0.1f,3.9f,1.7f};
         ArrayList<String> predOutput = new ArrayList<>();
 
         final Attribute attributeVariance = new Attribute("Variance");
@@ -303,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        for (int i = 0; i < predData.length; i++) {
+        for (int i = 0; i < testData.size(); i++) {
             Instances dataUnpredicted = new Instances("TestInstances",
                     attributeList, 1);
             dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
@@ -311,17 +313,15 @@ public class MainActivity extends AppCompatActivity {
             int currSample = i;
             DenseInstance newInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
                 {
-                    setValue(attributeVariance, predData[currSample]);
+                    setValue(attributeVariance, testData.get(currSample).getVariance());
                 }
             };
             newInstance.setDataset(dataUnpredicted);
 
             try {
-                double result = SVM.classifyInstance(newInstance);
+                double result = model.classifyInstance(newInstance);
                 String className = classes.get(new Double(result).intValue());
                 predOutput.add(className);
-//                String msg = "Nr: " + predData[currSample] + ", predicted: " + className;
-//                Log.d("Weka_test", msg);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -329,11 +329,16 @@ public class MainActivity extends AppCompatActivity {
         return predOutput;
     }
 
-    public void onPredictButtonClickHandler(){
+    public void onPredictButtonClickHandler() throws IOException {
+
+        DataDeserializer deserializer = new DataDeserializer(getResources().openRawResource(R.raw.data_test_272));
+        ArrayList<Sample> samples = deserializer.deserializeSamples();
+        Log.d("Size of sample", String.valueOf(samples.size()));
 
         AssetManager assetManager = getAssets();
+
         try{
-            SVM = (Classifier) weka.core.SerializationHelper.read(assetManager.open("svm.model"));
+            SVM = (Classifier) weka.core.SerializationHelper.read(assetManager.open("svm272.model"));
         }
         catch (IOException e){
             e.printStackTrace();
@@ -341,15 +346,18 @@ public class MainActivity extends AppCompatActivity {
         catch (Exception e) {
             e.printStackTrace();
         }
-        List<String> actual = Arrays.asList("Negative", "Positive", "Negative", "Positive", "Negative");
-        List<String> predictions  = predictBradycardia(SVM);
-        float accuracy = (float) evaluator.calculateAccuracy(actual, predictions);
+
+        ArrayList<String> actual = new ArrayList<>();
+        for (int i=0; i<samples.size();i++){
+            actual.add(samples.get(i).getLabel());
+        }
+
+        List<String> predictions  = predictBradycardia(SVM, samples);
+        float accuracy = evaluator.calculateAccuracy(actual, predictions);
         Log.d("accuracy", String.valueOf(accuracy));
         float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
         Log.d("false negative", String.valueOf(falseNegative));
         float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
         Log.d("false positive", String.valueOf(falsePositive));
-
     }
-
 }
