@@ -18,12 +18,22 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.content.res.AssetManager;
+import weka.classifiers.Classifier;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instances;
+
 public class MainActivity extends AppCompatActivity {
+
+    private Classifier SVM = null;
+    private PerformanceEvaluator evaluator = new PerformanceEvaluator();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +78,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.d("detectButton", "DetectButtonClick Handler called");
                 onDetectButtonClickHandler();
+            }
+        });
+
+        Button predictButton = findViewById(R.id.predictButton);
+        predictButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("predictButton", "predictButtonClick Handler called");
+                onPredictButtonClickHandler();
             }
         });
 
@@ -261,4 +280,76 @@ public class MainActivity extends AppCompatActivity {
         }
         falsePositive(heartRateRecords.get(0));
     }
+
+
+    public List<String> predictBradycardia(Classifier model) {
+
+        float[] predData = new float[]{1.7f,4.1f,0.1f,3.9f,1.7f};
+        ArrayList<String> predOutput = new ArrayList<>();
+
+        final Attribute attributeVariance = new Attribute("Variance");
+        final List<String> classes = new ArrayList<String>(){
+            {
+                add("Positive");
+                add("Negative");
+            }
+        };
+
+        ArrayList<Attribute> attributeList = new ArrayList<Attribute>(1){
+            {
+                add(attributeVariance);
+                Attribute attributeClass = new Attribute("@@class@@",classes);
+                add(attributeClass);
+            }
+        };
+
+        for (int i = 0; i < predData.length; i++) {
+            Instances dataUnpredicted = new Instances("TestInstances",
+                    attributeList, 1);
+            dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
+
+            int currSample = i;
+            DenseInstance newInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
+                {
+                    setValue(attributeVariance, predData[currSample]);
+                }
+            };
+            newInstance.setDataset(dataUnpredicted);
+
+            try {
+                double result = SVM.classifyInstance(newInstance);
+                String className = classes.get(new Double(result).intValue());
+                predOutput.add(className);
+//                String msg = "Nr: " + predData[currSample] + ", predicted: " + className;
+//                Log.d("Weka_test", msg);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return predOutput;
+    }
+
+    public void onPredictButtonClickHandler(){
+
+        AssetManager assetManager = getAssets();
+        try{
+            SVM = (Classifier) weka.core.SerializationHelper.read(assetManager.open("svm.model"));
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        List<String> actual = Arrays.asList("Negative", "Positive", "Negative", "Positive", "Negative");
+        List<String> predictions  = predictBradycardia(SVM);
+        float accuracy = (float) evaluator.calculateAccuracy(actual, predictions);
+        Log.d("accuracy", String.valueOf(accuracy));
+        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
+        Log.d("false negative", String.valueOf(falseNegative));
+        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
+        Log.d("false positive", String.valueOf(falsePositive));
+
+    }
+
 }
