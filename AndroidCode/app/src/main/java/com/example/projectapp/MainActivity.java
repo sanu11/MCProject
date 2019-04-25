@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         predictButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("predictButton", "predictButtonClick Handler called");
+//                Log.d("predictButton", "predictButtonClick Handler called");
                 openDialog();
             }
         });
@@ -153,19 +153,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup rg, int i) {
                 int childCount = rg.getChildCount();
-                Log.d("person index", String.valueOf(SelectedPersonIndex));
+//                Log.d("person index", String.valueOf(SelectedPersonIndex));
                 InputStream inputStream = null;
                 switch (SelectedPersonIndex) {
                     case 0:
+                        Log.d("Person Index", "0");
                         inputStream = getResources().openRawResource(R.raw.data_test_272);
                         break;
                     case 1:
+                        Log.d("Person Index", "1");
                         inputStream = getResources().openRawResource(R.raw.data_test_273);
                         break;
                     case 2:
+                        Log.d("Person Index", "2");
                         inputStream = getResources().openRawResource(R.raw.data_test_420);
                         break;
                     case 3:
+                        Log.d("Person Index", "3");
                         inputStream = getResources().openRawResource(R.raw.data_test_483);
                     default:
                         break;
@@ -410,12 +414,13 @@ public class MainActivity extends AppCompatActivity {
         final Attribute attributeVariance = new Attribute("Variance");
         final List<String> classes = new ArrayList<String>(){
             {
-                add("Positive");
                 add("Negative");
+                add("Positive");
+
             }
         };
 
-        ArrayList<Attribute> attributeList = new ArrayList<Attribute>(1){
+        ArrayList<Attribute> attributeList = new ArrayList<Attribute>(2){
             {
                 add(attributeVariance);
                 Attribute attributeClass = new Attribute("@@class@@",classes);
@@ -438,7 +443,10 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 double result = model.classifyInstance(newInstance);
+//                Log.d("result", String.valueOf(result));
+//                Log.d("actual", testData.get(currSample).getLabel());
                 String className = classes.get(new Double(result).intValue());
+//                Log.d("predicted", className);
                 predOutput.add(className);
             } catch (Exception e) {
                 e.printStackTrace();
