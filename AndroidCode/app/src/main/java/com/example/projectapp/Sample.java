@@ -2,14 +2,22 @@ package com.example.projectapp;
 
 public class Sample
 {
+    private float heartbeat;
     private float variance;
     private String label;
 
-    public Sample(float variance, String label) {
+    public Sample(float heartbeat, float variance, String label) {
+        this.heartbeat = heartbeat;
         this.variance = variance;
         this.label = label;
     }
 
+    public float getHeartrate() {
+        return heartbeat;
+    }
+    public void setHeartrate(float heartbeat) {
+        this.heartbeat = heartbeat;
+    }
     public float getVariance() {
         return variance;
     }

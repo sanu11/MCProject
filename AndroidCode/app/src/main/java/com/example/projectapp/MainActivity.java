@@ -47,24 +47,24 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadClassifiers() throws Exception {
         AssetManager assetManager = getAssets();
-        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm272.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm1.model")));
         svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm273.model")));
-        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm420.model")));
         svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm483.model")));
 
         lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic272.model")));
         lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic273.model")));
-        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic.model")));
+        lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic420.model")));
         lrModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("logistic483.model")));
 
         rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest272.model")));
         rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest273.model")));
-        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest.model")));
+        rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest420.model")));
         rfModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("randomForest483.model")));
 
         nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes272.model")));
         nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes273.model")));
-        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes.model")));
+        nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes420.model")));
         nbModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("naivebayes483.model")));
     }
 
@@ -158,19 +158,19 @@ public class MainActivity extends AppCompatActivity {
                 switch (SelectedPersonIndex) {
                     case 0:
                         Log.d("Person Index", "0");
-                        inputStream = getResources().openRawResource(R.raw.data_test_272);
+                        inputStream = getResources().openRawResource(R.raw.test_data_272);
                         break;
                     case 1:
                         Log.d("Person Index", "1");
-                        inputStream = getResources().openRawResource(R.raw.data_test_273);
+                        inputStream = getResources().openRawResource(R.raw.test_data_273);
                         break;
                     case 2:
                         Log.d("Person Index", "2");
-                        inputStream = getResources().openRawResource(R.raw.data_test_420);
+                        inputStream = getResources().openRawResource(R.raw.test_data_420);
                         break;
                     case 3:
                         Log.d("Person Index", "3");
-                        inputStream = getResources().openRawResource(R.raw.data_test_483);
+                        inputStream = getResources().openRawResource(R.raw.test_data_483);
                     default:
                         break;
                 }
@@ -443,6 +443,7 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 double result = model.classifyInstance(newInstance);
+//                Log.d("Sample", String.valueOf(testData.get(i).getHeartrate()));
 //                Log.d("result", String.valueOf(result));
 //                Log.d("actual", testData.get(currSample).getLabel());
                 String className = classes.get(new Double(result).intValue());

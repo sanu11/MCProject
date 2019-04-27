@@ -54,7 +54,7 @@ public class DataDeserializer {
             String[] sampleDetails = line.split(COMMA_DELIMITER);
             if(sampleDetails.length > 0 )
             {
-                Sample s = new Sample(Float.parseFloat(sampleDetails[0]), sampleDetails[1]);
+                Sample s = new Sample(Float.parseFloat(sampleDetails[0]), Float.parseFloat(sampleDetails[1]), sampleDetails[2]);
                 samples.add(s);
             }
         }
