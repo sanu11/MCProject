@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadClassifiers() throws Exception {
         AssetManager assetManager = getAssets();
-        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm1.model")));
+        svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm272.model")));
         svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm273.model")));
         svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm420.model")));
         svmModels.add((Classifier) weka.core.SerializationHelper.read(assetManager.open("svm483.model")));
