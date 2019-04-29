@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private PerformanceEvaluator evaluator = new PerformanceEvaluator();
     private String modelSelected = "";
     private int SelectedPersonIndex = 0;
+    private List<Integer> predictedLabels = new ArrayList<Integer>();
 
     private ArrayList<Classifier> svmModels = new ArrayList<>();
     private ArrayList<Classifier> lrModels = new ArrayList<>();
@@ -217,7 +218,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void plotGraph(float[] record){
+    public void plotGraph(float[] record)   {
+        plotGraph(record, new int[0]);
+    }
+    public void plotGraph(float[] record, int[] labels){
 
         GraphView graphView = (GraphView) findViewById(R.id.graphInterface);
         int n =record.length;
@@ -246,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
         highlightedDP = highlightedPoints.toArray(highlightedDP);
         PointsGraphSeries<DataPoint> pointsGraphSeries = new PointsGraphSeries<DataPoint>(highlightedDP);
         pointsGraphSeries.setColor(Color.RED);
-        pointsGraphSeries.setSize(10.0f);
+        pointsGraphSeries.setSize(7.5f);
         graphView.addSeries(pointsGraphSeries);
     }
 
@@ -410,6 +414,7 @@ public class MainActivity extends AppCompatActivity {
     public List<String> predictBradycardia(Classifier model, ArrayList<Sample> testData) {
 
         ArrayList<String> predOutput = new ArrayList<>();
+        this.predictedLabels = new ArrayList<Integer>();
 
         final Attribute attributeVariance = new Attribute("Variance");
         final List<String> classes = new ArrayList<String>(){
@@ -443,6 +448,10 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 double result = model.classifyInstance(newInstance);
+                int classLabel = new Double(result).intValue();
+                if(classLabel == 1) {
+                    this.predictedLabels.add(classLabel);
+                }
 //                Log.d("Sample", String.valueOf(testData.get(i).getHeartrate()));
 //                Log.d("result", String.valueOf(result));
 //                Log.d("actual", testData.get(currSample).getLabel());
@@ -476,9 +485,27 @@ public class MainActivity extends AppCompatActivity {
         Log.d("execution time in miliseconds", String.valueOf(executionTime));
         float accuracy = evaluator.calculateAccuracy(actual, predictions);
         Log.d("accuracy", String.valueOf(accuracy));
+
+        //plotting graph
+        GraphView graph = (GraphView) findViewById(R.id.graphInterface);
+        graph.setVisibility(View.VISIBLE);
+        graph.removeAllSeries();
+        float[] heartRateRecords = new float[samples.size()];
+        int[] predictedClassLabel = new int[this.predictedLabels.size()];
+        for(int i=0; i<samples.size(); i++) {
+            heartRateRecords[i] = samples.get(i).getHeartrate();
+        }
+        for(int i=0; i<this.predictedLabels.size(); i++)    {
+            predictedClassLabel[i] = this.predictedLabels.get(i);
+        }
+        plotGraph(heartRateRecords,predictedClassLabel);
+        //plotting graph end
+
 //        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
 //        Log.d("false negative", String.valueOf(falseNegative));
 //        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
 //        Log.d("false positive", String.valueOf(falsePositive));
     }
+
+
 }
