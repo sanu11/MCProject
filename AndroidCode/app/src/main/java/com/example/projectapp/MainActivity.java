@@ -2,9 +2,10 @@ package com.example.projectapp;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,7 +15,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -25,10 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import android.content.res.AssetManager;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -36,7 +34,6 @@ import weka.core.Instances;
 
 public class MainActivity extends AppCompatActivity {
 
-//    private Classifier SVM = null;
     private PerformanceEvaluator evaluator = new PerformanceEvaluator();
     private String modelSelected = "";
     private int SelectedPersonIndex = 0;
@@ -266,12 +263,6 @@ public class MainActivity extends AppCompatActivity {
         for (float r : record) {
             recordsAsList.add(Float.valueOf(r));
         }
-//        graphView.getViewport().setMinX(0);
-//        graphView.getViewport().setMinY(0);
-//        graphView.getViewport().setMaxX(n);
-//        graphView.getViewport().setMaxY(Collections.max(recordsAsList));
-//        graphView.getViewport().setYAxisBoundsManual(true);
-//        graphView.getViewport().setXAxisBoundsManual(true);
 
     }
 
@@ -383,11 +374,12 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void onDetectButtonClickHandler() {
-        GraphView graph = (GraphView) findViewById(R.id.graphInterface);
+        GraphView graph = findViewById(R.id.graphInterface);
         graph.setVisibility(View.VISIBLE);
         graph.removeAllSeries();
         graph.getViewport().setMaxX(75);
         graph.getViewport().setScrollable(true);
+        graph.getViewport().setScalable(true);
 
         TextView execTime = (TextView) findViewById(R.id.executionTime);
         execTime.setVisibility(View.GONE);
@@ -519,6 +511,7 @@ public class MainActivity extends AppCompatActivity {
         graph.removeAllSeries();
         graph.getViewport().setMaxX(75);
         graph.getViewport().setScrollable(true);
+        graph.getViewport().setScalable(true);
         float[] heartRateRecords = new float[samples.size()];
         int[] predictedClassLabel = new int[this.predictedLabels.size()];
         for(int i=0; i<samples.size(); i++) {
