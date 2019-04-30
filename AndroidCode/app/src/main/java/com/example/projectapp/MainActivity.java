@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         String[] arraySpinner = new String[] {
-                "Person 1", "Person 2", "Person 3", "Person 4", "Custom"
+                "Person 1", "Person 2", "Person 3", "Person 4"
         };
         Spinner s = (Spinner) findViewById(R.id.spinner);
         final Button uploadFile = findViewById(R.id.uploadFileButton);
@@ -94,15 +94,14 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = parent.getItemAtPosition(position).toString();
                 SelectedPersonIndex = position;
-                if(selectedItem.equals("Custom"))   {
-                    findViewById(R.id.uploadFileButton).setVisibility(View.VISIBLE);
-                    GraphView graphView = findViewById(R.id.graphInterface);
-                    graphView.removeAllSeries();
-                    graphView.setVisibility(View.GONE);
-                    //TODO : handle case of Custom selected and Detect clicked without uploading file
-                }
-                else
-                    findViewById(R.id.uploadFileButton).setVisibility(View.GONE);
+//                if(selectedItem.equals("Custom"))   {
+//                    findViewById(R.id.uploadFileButton).setVisibility(View.VISIBLE);
+//                    GraphView graphView = findViewById(R.id.graphInterface);
+//                    graphView.removeAllSeries();
+//                    graphView.setVisibility(View.GONE);
+//                    //TODO : handle case of Custom selected and Detect clicked without uploading file
+//                }
+                findViewById(R.id.uploadFileButton).setVisibility(View.GONE);
             }
 
             @Override
@@ -388,6 +387,8 @@ public class MainActivity extends AppCompatActivity {
         graph.setVisibility(View.VISIBLE);
         graph.removeAllSeries();
 
+        TextView execTime = (TextView) findViewById(R.id.executionTime);
+        execTime.setVisibility(View.GONE);
         Spinner spinner = findViewById(R.id.spinner);
         String selectedItem = spinner.getSelectedItem().toString();
         Log.d("DetectButtonClick",""+selectedItem);
@@ -426,10 +427,10 @@ public class MainActivity extends AppCompatActivity {
             plotGraph(heartRateRecords.get(0));
             Log.d("HeartRate",""+ Arrays.toString(heartRateRecords.get(0)));
         }
-        else if(selectedItem.equals("Custom"))   {
-            Toast.makeText(MainActivity.this, "Select Upload file", Toast.LENGTH_SHORT).show();
-            //TODO
-        }
+//        else if(selectedItem.equals("Custom"))   {
+//            Toast.makeText(MainActivity.this, "Select Upload file", Toast.LENGTH_SHORT).show();
+//            //TODO
+//        }
         falsePositive(heartRateRecords.get(0));
     }
 
@@ -504,6 +505,9 @@ public class MainActivity extends AppCompatActivity {
 
         double executionTime = (double) (endTime - startTime)/1000000;
         Log.d("execution time in miliseconds", String.valueOf(executionTime));
+        TextView execTime = (TextView) findViewById(R.id.executionTime);
+        execTime.setVisibility(View.VISIBLE);
+        execTime.setText("Execution Time: "  + executionTime + " miliseconds");
         float accuracy = evaluator.calculateAccuracy(actual, predictions);
         Log.d("accuracy", String.valueOf(accuracy));
 
