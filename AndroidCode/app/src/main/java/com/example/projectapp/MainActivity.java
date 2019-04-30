@@ -387,7 +387,8 @@ public class MainActivity extends AppCompatActivity {
         GraphView graph = (GraphView) findViewById(R.id.graphInterface);
         graph.setVisibility(View.VISIBLE);
         graph.removeAllSeries();
-
+        graph.getViewport().setMaxX(75);
+        graph.getViewport().setScrollable(true);
         Spinner spinner = findViewById(R.id.spinner);
         String selectedItem = spinner.getSelectedItem().toString();
         Log.d("DetectButtonClick",""+selectedItem);
@@ -511,6 +512,8 @@ public class MainActivity extends AppCompatActivity {
         GraphView graph = (GraphView) findViewById(R.id.graphInterface);
         graph.setVisibility(View.VISIBLE);
         graph.removeAllSeries();
+        graph.getViewport().setMaxX(75);
+        graph.getViewport().setScrollable(true);
         float[] heartRateRecords = new float[samples.size()];
         int[] predictedClassLabel = new int[this.predictedLabels.size()];
         for(int i=0; i<samples.size(); i++) {
