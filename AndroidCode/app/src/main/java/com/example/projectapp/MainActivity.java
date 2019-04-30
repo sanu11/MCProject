@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import android.content.res.AssetManager;
@@ -240,10 +241,20 @@ public class MainActivity extends AppCompatActivity {
 
         List<DataPoint> highlightedPoints =new ArrayList<DataPoint>();
         DataPoint hdp = null;
-        for(int i=1;i<=n;i++){
-            if(record[i-1] <= 60) {
-                hdp = new DataPoint(i, record[i - 1]);
-                highlightedPoints.add(hdp);
+        if(labels.length == 0)  {
+            for(int i=1;i<=n;i++){
+                if(record[i-1] <= 60) {
+                    hdp = new DataPoint(i, record[i - 1]);
+                    highlightedPoints.add(hdp);
+                }
+            }
+        }
+        else {
+            for(int i=1;i<=labels.length;i++){
+                if(labels[i-1] == 1) {
+                    hdp = new DataPoint(i, record[i-1]);
+                    highlightedPoints.add(hdp);
+                }
             }
         }
         DataPoint[] highlightedDP = new DataPoint[highlightedPoints.size()];
@@ -252,6 +263,17 @@ public class MainActivity extends AppCompatActivity {
         pointsGraphSeries.setColor(Color.RED);
         pointsGraphSeries.setSize(7.5f);
         graphView.addSeries(pointsGraphSeries);
+        List<Float> recordsAsList = new ArrayList<Float>(record.length);
+        for (float r : record) {
+            recordsAsList.add(Float.valueOf(r));
+        }
+//        graphView.getViewport().setMinX(0);
+//        graphView.getViewport().setMinY(0);
+//        graphView.getViewport().setMaxX(n);
+//        graphView.getViewport().setMaxY(Collections.max(recordsAsList));
+//        graphView.getViewport().setYAxisBoundsManual(true);
+//        graphView.getViewport().setXAxisBoundsManual(true);
+
     }
 
     public void falsePositive(float[] hr){
@@ -365,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
         GraphView graph = (GraphView) findViewById(R.id.graphInterface);
         graph.setVisibility(View.VISIBLE);
         graph.removeAllSeries();
+
         Spinner spinner = findViewById(R.id.spinner);
         String selectedItem = spinner.getSelectedItem().toString();
         Log.d("DetectButtonClick",""+selectedItem);
@@ -449,9 +472,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 double result = model.classifyInstance(newInstance);
                 int classLabel = new Double(result).intValue();
-                if(classLabel == 1) {
-                    this.predictedLabels.add(classLabel);
-                }
+                this.predictedLabels.add(classLabel);
 //                Log.d("Sample", String.valueOf(testData.get(i).getHeartrate()));
 //                Log.d("result", String.valueOf(result));
 //                Log.d("actual", testData.get(currSample).getLabel());
@@ -499,12 +520,17 @@ public class MainActivity extends AppCompatActivity {
             predictedClassLabel[i] = this.predictedLabels.get(i);
         }
         plotGraph(heartRateRecords,predictedClassLabel);
+
         //plotting graph end
 
-//        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
-//        Log.d("false negative", String.valueOf(falseNegative));
-//        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
-//        Log.d("false positive", String.valueOf(falsePositive));
+        //updating false positive and false negative values
+        float falsePositive = evaluator.calculateFalsePositive(actual, predictions);
+        TextView fp = findViewById(R.id.falsePositive);
+        fp.setText("False Positive: " + falsePositive);
+
+        float falseNegative = evaluator.calculateFalseNegative(actual, predictions);
+        TextView fn = findViewById(R.id.falseNegtive);
+        fn.setText("False Negative: " + falseNegative);
     }
 
 
